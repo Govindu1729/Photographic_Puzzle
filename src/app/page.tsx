@@ -32,6 +32,7 @@ import {
   BOARD_SIZES,
   newGame,
   move as doMove,
+  rescue,
 } from "@/lib/game"
 
 function hexToRgba(hex: string, alpha: number) {
@@ -127,6 +128,7 @@ export default function PhotoMergeGame() {
   const [sfxOn, setSfxOn] = useState(true)
   const [lastMerge, setLastMerge] = useState<{ level: number; key: number } | null>(null)
   const [showCollage, setShowCollage] = useState(false) // For collage modal
+  const [rescuesLeft, setRescuesLeft] = useState(3) // 3 rescue chances per game
 
   // settings (persisted)
   const [musicStyle, setMusicStyle] = useState<MusicStyle>("lofi")
@@ -319,7 +321,23 @@ export default function PhotoMergeGame() {
     setLastMerge(null)
     setScoreSaved(false)
     setShowCollage(false)
+    setRescuesLeft(3)
   }
+
+  // Rescue: clear all level-0 tiles to free up space. 3 uses per game.
+  const useRescue = useCallback(() => {
+    if (rescuesLeft <= 0 || busyRef.current) return
+    const result = rescue(tiles)
+    if (result.removed === 0) {
+      // Nothing to remove — don't waste a rescue
+      return
+    }
+    setTiles(result.tiles)
+    setDying([])
+    setRescuesLeft((n) => n - 1)
+    if (gameOver) setGameOver(false)
+    audio?.mergeSfx(2) // a little "bark" of relief
+  }, [rescuesLeft, tiles, gameOver, audio])
 
   const changeBoardSize = (size: BoardSize) => {
     setBoardSize(size)
@@ -456,6 +474,15 @@ export default function PhotoMergeGame() {
               {sfxOn ? "🔔" : "🔕"}
             </Button>
             <Button
+              onClick={useRescue}
+              disabled={rescuesLeft === 0 || busyRef.current}
+              className="font-display sticker-btn rounded-xl px-3 text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: rescuesLeft > 0 ? theme.accent : theme.panelBorder }}
+              title={`Clear all Lil' Chicks to free up space! ${rescuesLeft} left`}
+            >
+              🐾 {rescuesLeft}
+            </Button>
+            <Button
               onClick={() => restart()}
               className="font-display sticker-btn rounded-xl px-5 text-white"
               style={{ background: theme.accent }}
@@ -567,6 +594,20 @@ export default function PhotoMergeGame() {
               <p className="font-hand mt-1 text-center text-base" style={{ color: theme.textSoft }}>
                 you reached <b>{chain[highestLevel].name}</b> · score {score}
               </p>
+              {rescuesLeft > 0 && (
+                <>
+                  <p className="font-hand text-center text-sm" style={{ color: theme.textSoft }}>
+                    The Lil&apos; Chicks can fly away to make room!
+                  </p>
+                  <Button
+                    onClick={useRescue}
+                    className="font-display sticker-btn mt-2 rounded-xl px-6 text-white"
+                    style={{ background: theme.accent }}
+                  >
+                    🐾 Rescue! ({rescuesLeft} left)
+                  </Button>
+                </>
+              )}
               <SaveScoreForm
                 theme={theme}
                 saved={scoreSaved}
@@ -761,6 +802,9 @@ export default function PhotoMergeGame() {
           <ul className="list-inside list-disc space-y-0.5">
             <li>arrow keys / WASD or swipe to slide</li>
             <li>two matching photos merge into the next cuter one</li>
+            <li>
+              stuck? tap <b>🐾 Rescue</b> (3 per game) — the Lil&apos; Chicks fly away to make room!
+            </li>
             <li>
               merge two Meghus to reveal <b>the big collage</b> — click it to see full size!
             </li>

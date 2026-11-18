@@ -176,3 +176,13 @@ export function canMove(tiles: Tile[], size: number) {
   }
   return false
 }
+
+/**
+ * Rescue: clears all level-0 tiles (the "Lil' Chicks") to free up space.
+ * Returns the surviving tiles and how many were removed.
+ * Used when the player is stuck or about to lose.
+ */
+export function rescue(tiles: Tile[]): { tiles: Tile[]; removed: number } {
+  const alive = tiles.filter((t) => t.level > 0)
+  return { tiles: alive, removed: tiles.length - alive.length }
+}
