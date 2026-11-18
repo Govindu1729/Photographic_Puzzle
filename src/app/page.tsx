@@ -115,7 +115,7 @@ function clientDominantColor(url: string): Promise<string | null> {
 
 export default function PhotoMergeGame() {
   const [boardSize, setBoardSize] = useState<BoardSize>(4)
-  const [difficulty] = useState(2) // Fixed difficulty for Meghu's Day
+  const [difficulty] = useState(12) // Fixed difficulty - full journey to Meghu's Day
   const [tiles, setTiles] = useState<Tile[]>(() => initialTiles(4))
   const [dying, setDying] = useState<Tile[]>([])
   const [score, setScore] = useState(0)
