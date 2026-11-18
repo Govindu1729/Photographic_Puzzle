@@ -20,7 +20,7 @@ export interface MoveResult {
 
 export type Direction = "up" | "down" | "left" | "right"
 
-export const BOARD_SIZES = [3, 4, 5] as const
+export const BOARD_SIZES = [3, 4] as const
 export type BoardSize = (typeof BOARD_SIZES)[number]
 
 let nextId = 1

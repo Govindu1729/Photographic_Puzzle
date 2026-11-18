@@ -15,7 +15,7 @@ import ParticleLayer from "@/components/ParticleLayer"
 import {
   PHOTO_CHAIN,
   FALLBACK_COLORS,
-  chainFor,
+  chainForSize,
 } from "@/lib/photo-chain"
 import { THEMES, getTheme } from "@/lib/themes"
 import {
@@ -128,7 +128,7 @@ export default function PhotoMergeGame() {
   const [sfxOn, setSfxOn] = useState(true)
   const [lastMerge, setLastMerge] = useState<{ level: number; key: number } | null>(null)
   const [showCollage, setShowCollage] = useState(false) // For collage modal
-  const [rescuesLeft, setRescuesLeft] = useState(3) // 3 rescue chances per game
+  const [rescuesLeft, setRescuesLeft] = useState(5) // 5 rescue chances per game
 
   // settings (persisted)
   const [musicStyle, setMusicStyle] = useState<MusicStyle>("lofi")
@@ -141,7 +141,7 @@ export default function PhotoMergeGame() {
   const [scoreSaved, setScoreSaved] = useState(false)
 
   const theme = getTheme(themeId)
-  const chain = chainFor(difficulty)
+  const chain = chainForSize(boardSize)
   const winLevel = chain.length - 1
 
   const boardRef = useRef<HTMLDivElement>(null)
@@ -321,7 +321,7 @@ export default function PhotoMergeGame() {
     setLastMerge(null)
     setScoreSaved(false)
     setShowCollage(false)
-    setRescuesLeft(3)
+    setRescuesLeft(5)
   }
 
   // Rescue: clear all level-0 tiles to free up space. 3 uses per game.
@@ -387,7 +387,7 @@ export default function PhotoMergeGame() {
       score,
       won,
       date: new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-      photos: difficulty,
+      photos: chain.length,
     }
     const list = [...leaderboard, entry].sort((a, b) => b.score - a.score).slice(0, 10)
     setLeaderboard(list)
@@ -478,7 +478,7 @@ export default function PhotoMergeGame() {
               disabled={rescuesLeft === 0 || busyRef.current}
               className="font-display sticker-btn rounded-xl px-3 text-white disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: rescuesLeft > 0 ? theme.accent : theme.panelBorder }}
-              title={`Clear all Lil' Chicks to free up space! ${rescuesLeft} left`}
+              title={`Clear all low-level tiles to free up space! ${rescuesLeft} left`}
             >
               🐾 {rescuesLeft}
             </Button>
@@ -597,7 +597,7 @@ export default function PhotoMergeGame() {
               {rescuesLeft > 0 && (
                 <>
                   <p className="font-hand text-center text-sm" style={{ color: theme.textSoft }}>
-                    The Lil&apos; Chicks can fly away to make room!
+                    Low-level tiles can clear to make room!
                   </p>
                   <Button
                     onClick={useRescue}
@@ -693,7 +693,6 @@ export default function PhotoMergeGame() {
                 <SelectContent>
                   <SelectItem value="3">3×3 — quick bite</SelectItem>
                   <SelectItem value="4">4×4 — classic</SelectItem>
-                  <SelectItem value="5">5×5 — marathon</SelectItem>
                 </SelectContent>
               </Select>
             </label>
@@ -803,7 +802,7 @@ export default function PhotoMergeGame() {
             <li>arrow keys / WASD or swipe to slide</li>
             <li>two matching photos merge into the next cuter one</li>
             <li>
-              stuck? tap <b>🐾 Rescue</b> (3 per game) — the Lil&apos; Chicks fly away to make room!
+              stuck? tap <b>🐾 Rescue</b> (5 per game) — low-level tiles clear to make room!
             </li>
             <li>
               merge two Meghus to reveal <b>the big collage</b> — click it to see full size!
