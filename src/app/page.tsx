@@ -867,9 +867,17 @@ export default function PhotoMergeGame() {
       )}
 
       {/* Welcome Dialog — First-time setup for mood/theme/music */}
+      {/* FAIL-PROOF: Uses native HTML selects (no portals, no z-index issues) */}
       {showWelcome && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="wobbly mx-4 max-w-md p-6" style={{ background: theme.panelBg }}>
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          style={{ pointerEvents: "auto" }}
+        >
+          <div
+            className="wobbly mx-4 max-w-md p-6 pointer-events-auto"
+            style={{ background: theme.panelBg }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2 className="font-display mb-3 text-center text-2xl font-bold" style={{ color: theme.text }}>
               🎨 Set Your Mood
             </h2>
@@ -878,61 +886,61 @@ export default function PhotoMergeGame() {
             </p>
 
             <div className="space-y-3">
-              {/* Theme Selection */}
+              {/* Theme Selection — native select (fail-proof, no portal) */}
               <label className="block">
                 <span className="font-display mb-1 block text-xs font-bold" style={{ color: theme.textSoft }}>
                   Theme
                 </span>
-                <Select value={themeId} onValueChange={changeTheme}>
-                  <SelectTrigger className="font-hand h-10 w-full bg-white/70 dark:bg-white/10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {THEMES.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.emoji} {t.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={themeId}
+                  onChange={(e) => changeTheme(e.target.value)}
+                  className="font-hand h-10 w-full rounded-md border border-gray-300 bg-white/90 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                  style={{ color: "#333" }}
+                >
+                  {THEMES.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.emoji} {t.name}
+                    </option>
+                  ))}
+                </select>
               </label>
 
-              {/* Music Style */}
+              {/* Music Style — native select (fail-proof, no portal) */}
               <label className="block">
                 <span className="font-display mb-1 block text-xs font-bold" style={{ color: theme.textSoft }}>
                   Music Station
                 </span>
-                <Select value={musicStyle} onValueChange={(v) => changeMusicStyle(v as MusicStyle)}>
-                  <SelectTrigger className="font-hand h-10 w-full bg-white/70 dark:bg-white/10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MUSIC_STYLES.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.emoji} {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={musicStyle}
+                  onChange={(e) => changeMusicStyle(e.target.value as MusicStyle)}
+                  className="font-hand h-10 w-full rounded-md border border-gray-300 bg-white/90 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                  style={{ color: "#333" }}
+                >
+                  {MUSIC_STYLES.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.emoji} {m.label}
+                    </option>
+                  ))}
+                </select>
               </label>
 
-              {/* Sound Effects */}
+              {/* Sound Effects — native select (fail-proof, no portal) */}
               <label className="block">
                 <span className="font-display mb-1 block text-xs font-bold" style={{ color: theme.textSoft }}>
                   Sound Effects
                 </span>
-                <Select value={sfxPack} onValueChange={(v) => changeSfxPack(v as SfxPack)}>
-                  <SelectTrigger className="font-hand h-10 w-full bg-white/70 dark:bg-white/10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SFX_PACKS.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.emoji} {p.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={sfxPack}
+                  onChange={(e) => changeSfxPack(e.target.value as SfxPack)}
+                  className="font-hand h-10 w-full rounded-md border border-gray-300 bg-white/90 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                  style={{ color: "#333" }}
+                >
+                  {SFX_PACKS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.emoji} {p.label}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               {/* Music Toggle */}
@@ -940,23 +948,25 @@ export default function PhotoMergeGame() {
                 <span className="font-display text-sm" style={{ color: theme.text }}>
                   Play Background Music
                 </span>
-                <Button
+                <button
+                  type="button"
                   onClick={() => setMusicOn(!musicOn)}
-                  className="font-display h-8 px-4 text-sm text-white"
+                  className="font-display h-8 cursor-pointer rounded-md px-4 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95"
                   style={{ background: musicOn ? theme.accent : "#999" }}
                 >
                   {musicOn ? "🔊 On" : "🔇 Off"}
-                </Button>
+                </button>
               </div>
             </div>
 
-            <Button
+            <button
+              type="button"
               onClick={handleWelcomeComplete}
-              className="font-display sticker-btn mt-5 h-11 w-full rounded-xl text-lg text-white"
+              className="font-display sticker-btn mt-5 h-11 w-full cursor-pointer rounded-xl text-lg font-bold text-white transition-transform hover:scale-105 active:scale-95"
               style={{ background: theme.accent }}
             >
               Let&apos;s Play! 🎮
-            </Button>
+            </button>
           </div>
         </div>
       )}
