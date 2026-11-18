@@ -26,19 +26,24 @@ const BASE_PHOTOS = [
     name: "Hedgehog",
     url: "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/9bba88e0fe00.jpg",
   },
+  {
+    name: "Fennec Fox",
+    url: "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/fennec-fox.jpg",
+  },
 ]
 
 // Meghu photos (always last two in every chain)
-const MEGHU = { name: "Meghu", url: "/meghu.jpeg" }
-const MEGHU_DAY = { name: "It's Meghu's Day!", url: "/meghu-collage.jpeg" }
+// Using relative paths that work with Next.js basePath
+const MEGHU = { name: "Meghu", url: "./meghu.jpeg" }
+const MEGHU_DAY = { name: "It's Meghu's Day!", url: "./meghu-collage.jpeg" }
 
 /**
  * Returns a board-size-specific photo chain.
- * 3x3: 5 levels (3 animals + Meghu + collage)
- * 4x4: 7 levels (5 animals + Meghu + collage)
+ * 3x3: 6 levels (4 animals + Meghu + collage)
+ * 4x4: 8 levels (6 animals + Meghu + collage)
  */
 export function chainForSize(size: 3 | 4): PhotoLevel[] {
-  const count = size === 3 ? 5 : 7
+  const count = size === 3 ? 6 : 8
   const animalCount = count - 2 // leave room for Meghu and Meghu's Day
 
   const chain: PhotoLevel[] = []
@@ -55,16 +60,17 @@ export function chainForSize(size: 3 | 4): PhotoLevel[] {
 export const PHOTO_CHAIN = chainForSize(4)
 
 // Fallback palette (used until the server reports the true dominant colors)
-// Indexed to match the 4x4 chain (7 levels max)
+// Indexed to match the 4x4 chain (8 levels max)
 export const FALLBACK_COLORS = [
   "#ffd166", // 0: chick - warm yellow
   "#ff9f68", // 1: kitten - orange
   "#f8b4d9", // 2: bunny - pink
   "#e8b04b", // 3: puppy - golden
   "#c9a27e", // 4: hedgehog - caramel
-  "#ffb6c1", // 5: meghu - soft pink
-  "#ff69b4", // 6: meghu-collage - hot pink celebration
+  "#d4a574", // 5: fennec fox - sandy
+  "#ffb6c1", // 6: meghu - soft pink
+  "#ff69b4", // 7: meghu-collage - hot pink celebration
 ]
 
-export const WIN_LEVEL_3 = 4
-export const WIN_LEVEL_4 = 6
+export const WIN_LEVEL_3 = 5
+export const WIN_LEVEL_4 = 7

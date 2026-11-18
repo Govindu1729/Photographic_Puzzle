@@ -824,7 +824,7 @@ export default function PhotoMergeGame() {
             ✕
           </button>
           <Image
-            src="/meghu-collage.jpeg"
+            src="./meghu-collage.jpeg"
             alt="Meghu's Cute Collage"
             fill
             className="object-contain"
