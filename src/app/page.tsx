@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import ParticleLayer from "@/components/ParticleLayer"
+import { CelebrationSparkles } from "@/components/CelebrationSparkles"
 import {
   PHOTO_CHAIN,
   FALLBACK_COLORS,
@@ -130,6 +131,7 @@ export default function PhotoMergeGame() {
   const [lastMerge, setLastMerge] = useState<{ level: number; key: number } | null>(null)
   const [showCollage, setShowCollage] = useState(false) // For collage modal
   const [rescuesLeft, setRescuesLeft] = useState(5) // 5 rescue chances per game
+  const [showWelcome, setShowWelcome] = useState(false) // Welcome dialog on first load
 
   // settings (persisted)
   const [musicStyle, setMusicStyle] = useState<MusicStyle>("lofi")
@@ -183,6 +185,12 @@ export default function PhotoMergeGame() {
     }
      
     setLeaderboard(loadLeaderboard())
+    
+    // Show welcome dialog on first visit
+    const hasVisited = localStorage.getItem("photomerge-visited")
+    if (!hasVisited) {
+      setShowWelcome(true)
+    }
   }, [])
 
   // Fetch the dominant color of every photo. Server API first, then a
@@ -263,6 +271,8 @@ export default function PhotoMergeGame() {
       if (res.win) {
         setWon(true)
         audio?.winSfx()
+        // Play celebration music on win
+        audio?.celebrationMusic()
         // MASSIVE confetti celebration for Meghu's Day!
         window.dispatchEvent(new CustomEvent("fx:confetti", { detail: { duration: 10000 } }))
       } else if (res.gameOver) {
@@ -379,6 +389,16 @@ export default function PhotoMergeGame() {
     if (!audio) return
     audio.setSfx(!sfxOn)
     setSfxOn(!sfxOn)
+  }
+
+  const handleWelcomeComplete = () => {
+    setShowWelcome(false)
+    localStorage.setItem("photomerge-visited", "true")
+    // Start music if user wants it
+    if (musicOn && audio) {
+      audio.setMusicStyle(musicStyle)
+      audio.startMusic()
+    }
   }
 
   const saveScore = () => {
@@ -816,6 +836,11 @@ export default function PhotoMergeGame() {
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black"
           onClick={() => setShowCollage(false)}
         >
+          {/* Celebration sparkles matching the collage color palette */}
+          <CelebrationSparkles 
+            color={colors[winLevel] || "#FFD700"} 
+            active={showCollage} 
+          />
           <button
             onClick={() => setShowCollage(false)}
             className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-xl text-black shadow-lg hover:bg-white"
@@ -837,6 +862,101 @@ export default function PhotoMergeGame() {
             <p className="font-hand text-xl text-white/90 drop-shadow">
               Happy Birthday sweet puppy! 🐾
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Welcome Dialog — First-time setup for mood/theme/music */}
+      {showWelcome && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="wobbly mx-4 max-w-md p-6" style={{ background: theme.panelBg }}>
+            <h2 className="font-display mb-3 text-center text-2xl font-bold" style={{ color: theme.text }}>
+              🎨 Set Your Mood
+            </h2>
+            <p className="font-hand mb-4 text-center text-sm" style={{ color: theme.textSoft }}>
+              Customize your experience before playing!
+            </p>
+
+            <div className="space-y-3">
+              {/* Theme Selection */}
+              <label className="block">
+                <span className="font-display mb-1 block text-xs font-bold" style={{ color: theme.textSoft }}>
+                  Theme
+                </span>
+                <Select value={themeId} onValueChange={changeTheme}>
+                  <SelectTrigger className="font-hand h-10 w-full bg-white/70 dark:bg-white/10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {THEMES.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.emoji} {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+
+              {/* Music Style */}
+              <label className="block">
+                <span className="font-display mb-1 block text-xs font-bold" style={{ color: theme.textSoft }}>
+                  Music Station
+                </span>
+                <Select value={musicStyle} onValueChange={(v) => changeMusicStyle(v as MusicStyle)}>
+                  <SelectTrigger className="font-hand h-10 w-full bg-white/70 dark:bg-white/10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MUSIC_STYLES.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.emoji} {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+
+              {/* Sound Effects */}
+              <label className="block">
+                <span className="font-display mb-1 block text-xs font-bold" style={{ color: theme.textSoft }}>
+                  Sound Effects
+                </span>
+                <Select value={sfxPack} onValueChange={(v) => changeSfxPack(v as SfxPack)}>
+                  <SelectTrigger className="font-hand h-10 w-full bg-white/70 dark:bg-white/10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SFX_PACKS.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.emoji} {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+
+              {/* Music Toggle */}
+              <div className="flex items-center justify-between rounded-lg p-3" style={{ background: theme.cellBg }}>
+                <span className="font-display text-sm" style={{ color: theme.text }}>
+                  Play Background Music
+                </span>
+                <Button
+                  onClick={() => setMusicOn(!musicOn)}
+                  className="font-display h-8 px-4 text-sm text-white"
+                  style={{ background: musicOn ? theme.accent : "#999" }}
+                >
+                  {musicOn ? "🔊 On" : "🔇 Off"}
+                </Button>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleWelcomeComplete}
+              className="font-display sticker-btn mt-5 h-11 w-full rounded-xl text-lg text-white"
+              style={{ background: theme.accent }}
+            >
+              Let&apos;s Play! 🎮
+            </Button>
           </div>
         </div>
       )}

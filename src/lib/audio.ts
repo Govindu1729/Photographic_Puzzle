@@ -83,7 +83,7 @@ export class VibeAudio {
       this.master.gain.value = 0.9
       this.master.connect(this.ctx.destination)
       this.musicGain = this.ctx.createGain()
-      this.musicGain.gain.value = 0.5
+      this.musicGain.gain.value = 0.15 // Minimal volume by default
       this.musicFilter = this.ctx.createBiquadFilter()
       this.musicFilter.type = "lowpass"
       this.musicFilter.frequency.value = 2200
@@ -490,6 +490,38 @@ export class VibeAudio {
       } else {
         this.tone(f, t, { type: "square", vol: 0.07, dur: 0.2 })
       }
+    })
+  }
+
+  /** Celebration music - uplifting melody for the win moment. */
+  celebrationMusic() {
+    const ctx = this.ensureCtx()
+    if (!ctx) return
+    const t0 = ctx.currentTime
+    // Uplifting major progression melody
+    const melody = [
+      { note: 72, dur: 0.4 }, // C5
+      { note: 76, dur: 0.4 }, // E5
+      { note: 79, dur: 0.4 }, // G5
+      { note: 84, dur: 0.6 }, // C6
+      { note: 81, dur: 0.4 }, // A5
+      { note: 79, dur: 0.4 }, // G5
+      { note: 76, dur: 0.4 }, // E5
+      { note: 72, dur: 0.8 }, // C5 (hold)
+    ]
+    
+    let t = t0
+    melody.forEach(({ note, dur }) => {
+      const f = midiToFreq(note)
+      if (this.sfxPack === "pop") {
+        this.tone(f, t, { type: "triangle", vol: 0.18, dur: dur * 1.2 })
+      } else if (this.sfxPack === "chime") {
+        this.tone(f, t, { type: "sine", vol: 0.16, dur: dur * 1.5 })
+        this.tone(f * 2.01, t, { type: "sine", vol: 0.05, dur: dur * 0.8 })
+      } else {
+        this.tone(f, t, { type: "square", vol: 0.09, dur: dur * 0.8 })
+      }
+      t += dur
     })
   }
 }
