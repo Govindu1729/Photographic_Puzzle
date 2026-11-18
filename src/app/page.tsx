@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Slider } from "@/components/ui/slider"
 import {
   Select,
   SelectContent,
@@ -17,9 +16,6 @@ import {
   PHOTO_CHAIN,
   FALLBACK_COLORS,
   chainFor,
-  MIN_DIFFICULTY,
-  MAX_DIFFICULTY,
-  DIFFICULTY_LABELS,
 } from "@/lib/photo-chain"
 import { THEMES, getTheme } from "@/lib/themes"
 import {
@@ -119,7 +115,7 @@ function clientDominantColor(url: string): Promise<string | null> {
 
 export default function PhotoMergeGame() {
   const [boardSize, setBoardSize] = useState<BoardSize>(4)
-  const [difficulty, setDifficulty] = useState(MAX_DIFFICULTY)
+  const [difficulty] = useState(2) // Fixed difficulty for Meghu's Day
   const [tiles, setTiles] = useState<Tile[]>(() => initialTiles(4))
   const [dying, setDying] = useState<Tile[]>([])
   const [score, setScore] = useState(0)
@@ -130,6 +126,7 @@ export default function PhotoMergeGame() {
   const [musicOn, setMusicOn] = useState(false)
   const [sfxOn, setSfxOn] = useState(true)
   const [lastMerge, setLastMerge] = useState<{ level: number; key: number } | null>(null)
+  const [showCollage, setShowCollage] = useState(false) // For collage modal
 
   // settings (persisted)
   const [musicStyle, setMusicStyle] = useState<MusicStyle>("lofi")
@@ -165,11 +162,6 @@ export default function PhotoMergeGame() {
       setBoardSize(savedSize)
        
       setTiles(initialTiles(savedSize))
-    }
-    const savedDiff = Number(localStorage.getItem("photomerge-difficulty"))
-    if (savedDiff >= MIN_DIFFICULTY && savedDiff <= MAX_DIFFICULTY) {
-       
-      setDifficulty(savedDiff)
     }
     const savedStyle = localStorage.getItem("photomerge-music") as MusicStyle | null
     if (savedStyle && MUSIC_STYLES.some((m) => m.id === savedStyle)) {
@@ -268,7 +260,8 @@ export default function PhotoMergeGame() {
       if (res.win) {
         setWon(true)
         audio?.winSfx()
-        window.dispatchEvent(new CustomEvent("fx:confetti", { detail: { duration: 6000 } }))
+        // MASSIVE confetti celebration for Meghu's Day!
+        window.dispatchEvent(new CustomEvent("fx:confetti", { detail: { duration: 10000 } }))
       } else if (res.gameOver) {
         setGameOver(true)
       }
@@ -325,24 +318,13 @@ export default function PhotoMergeGame() {
     setGameOver(false)
     setLastMerge(null)
     setScoreSaved(false)
+    setShowCollage(false)
   }
 
   const changeBoardSize = (size: BoardSize) => {
     setBoardSize(size)
     localStorage.setItem("photomerge-size", String(size))
     restart(size)
-  }
-
-  const changeDifficulty = (n: number) => {
-    setDifficulty(n)
-    localStorage.setItem("photomerge-difficulty", String(n))
-    restart()
-    // Radix re-focuses the slider thumb after interaction; blur it on the next
-    // tick so arrow keys go back to moving tiles.
-    setTimeout(() => {
-      const el = document.activeElement as HTMLElement | null
-      if (el?.getAttribute("role") === "slider") el.blur()
-    }, 0)
   }
 
   const changeMusicStyle = (style: MusicStyle) => {
@@ -537,10 +519,10 @@ export default function PhotoMergeGame() {
             ))}
           </div>
 
-          {/* Win overlay — polaroid reveal */}
+          {/* Win overlay — polaroid reveal for Meghu's Day */}
           {won && (
             <OverlayCard theme={theme} tapeColor={colors[winLevel]}>
-              <div className="polaroid mx-auto w-40 rotate-2" style={{ animation: "reveal-zoom 0.7s ease" }}>
+              <div className="polaroid mx-auto w-40 rotate-2 cursor-pointer" style={{ animation: "reveal-zoom 0.7s ease" }} onClick={() => setShowCollage(true)}>
                 <Image
                   src={chain[winLevel].url}
                   alt={chain[winLevel].name}
@@ -550,11 +532,14 @@ export default function PhotoMergeGame() {
                   unoptimized
                 />
                 <div className="font-hand mt-1 text-center text-xs" style={{ color: "#5b4a3f" }}>
-                  the big reveal!!
+                  click for full collage!
                 </div>
               </div>
-              <p className="font-display mt-3 text-center text-xl" style={{ color: theme.text }}>
-                You made it! 🎉
+              <p className="font-display mt-3 text-center text-2xl font-bold" style={{ color: theme.text }}>
+                🎉 It&apos;s Meghu&apos;s Day! 🎉
+              </p>
+              <p className="font-hand text-center text-sm" style={{ color: theme.textSoft }}>
+                Happy Birthday little pup! 🐾
               </p>
               <SaveScoreForm
                 theme={theme}
@@ -600,10 +585,10 @@ export default function PhotoMergeGame() {
           )}
         </div>
 
-        {/* Progress chain — mini polaroids on a string */}
+        {/* Progress chain — mini polaroids on a string (only show achieved photos) */}
         <section aria-label="Photo chain progress">
           <h2 className="font-hand mb-2 text-center text-sm" style={{ color: theme.textSoft }}>
-            ✂︎ the cuteness chain — {chain.length} photos to glory ✂︎
+            ✂︎ the cuteness chain ✂︎
           </h2>
           <div
             className="flex flex-wrap items-start justify-center gap-2 rounded-2xl p-3"
@@ -611,41 +596,40 @@ export default function PhotoMergeGame() {
           >
             {chain.map((p, i) => {
               const reached = i <= highestLevel
+              // Only show achieved photos, hide upcoming ones completely
+              if (!reached) return null
+              
               const tilt = ((i * 7) % 9) - 4
               return (
                 <div
                   key={p.level}
                   className="polaroid relative transition-all duration-300"
                   style={{
-                    transform: `rotate(${tilt}deg) scale(${reached ? 1 : 0.82})`,
-                    filter: reached ? "none" : "grayscale(1) brightness(1.35)",
-                    opacity: reached ? 1 : 0.5,
+                    transform: `rotate(${tilt}deg) scale(1)`,
+                    opacity: 1,
                   }}
-                  title={reached ? p.name : "???"}
+                  title={p.name}
                 >
                   <div
                     className="h-9 w-9 overflow-hidden rounded-sm"
-                    style={{ boxShadow: reached ? `0 0 0 3px ${hexToRgba(colors[i], 0.7)}` : undefined }}
+                    style={{ boxShadow: `0 0 0 3px ${hexToRgba(colors[i], 0.7)}` }}
                   >
                     <Image
                       src={p.url}
-                      alt={reached ? p.name : "Locked photo"}
+                      alt={p.name}
                       width={72}
                       height={72}
                       className="h-full w-full object-cover"
                       unoptimized
                     />
                   </div>
-                  {!reached && (
-                    <span className="absolute inset-0 flex items-center justify-center text-lg">🔒</span>
-                  )}
                 </div>
               )
             })}
           </div>
         </section>
 
-        {/* Settings — recipe card */}
+        {/* Settings — recipe card (difficulty hidden, other settings remain) */}
         <section
           className="wobbly p-4"
           style={panelStyle}
@@ -654,35 +638,6 @@ export default function PhotoMergeGame() {
           <h2 className="font-display mb-3 text-lg" style={{ color: theme.text }}>
             ⚙ make it yours
           </h2>
-
-          {/* difficulty slider */}
-          <div className="mb-4">
-            <div className="mb-1 flex items-baseline justify-between">
-              <label htmlFor="difficulty-slider" className="text-sm font-bold" style={{ color: theme.textSoft }}>
-                difficulty — photos in the chain
-              </label>
-              <span className="font-display text-sm" style={{ color: theme.text }}>
-                {difficulty} · {DIFFICULTY_LABELS[difficulty]}
-              </span>
-            </div>
-            <Slider
-              id="difficulty-slider"
-              min={MIN_DIFFICULTY}
-              max={MAX_DIFFICULTY}
-              step={1}
-              value={[difficulty]}
-              onValueChange={([v]) => changeDifficulty(v)}
-              onValueCommit={() => {
-                // return keyboard focus to the page so arrow keys move tiles again
-                ;(document.activeElement as HTMLElement | null)?.blur()
-              }}
-              aria-label="Difficulty: number of photos in the chain"
-            />
-            <div className="mt-1 flex justify-between text-[10px]" style={{ color: theme.textSoft }}>
-              <span>{MIN_DIFFICULTY} · cozy</span>
-              <span>{MAX_DIFFICULTY} · legendary</span>
-            </div>
-          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-xs font-bold" style={{ color: theme.textSoft }}>
@@ -748,7 +703,7 @@ export default function PhotoMergeGame() {
             </label>
           </div>
           <p className="mt-2 text-xs" style={{ color: theme.textSoft }}>
-            changing difficulty or board size starts a fresh game
+            changing board size starts a fresh game
           </p>
         </section>
 
@@ -780,7 +735,7 @@ export default function PhotoMergeGame() {
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="text-[10px]" style={{ color: theme.textSoft }}>
-                      {e.photos} pics · {e.date}
+                      {e.date}
                     </span>
                     <span className="font-display" style={{ color: theme.text }}>
                       {e.score}
@@ -807,16 +762,47 @@ export default function PhotoMergeGame() {
             <li>arrow keys / WASD or swipe to slide</li>
             <li>two matching photos merge into the next cuter one</li>
             <li>
-              reach <b>{chain[winLevel].name}</b> — the final photo — to win
+              merge two Meghus to reveal <b>the big collage</b> — click it to see full size!
             </li>
           </ul>
         </section>
 
         <footer className="font-hand mt-auto pt-2 text-center text-xs" style={{ color: theme.textSoft }}>
-          made with love · effect colors are sampled from your photos · swap URLs in{" "}
-          <code>src/lib/photo-chain.ts</code> to use your friend&apos;s pics
+          made with love · effect colors are sampled from your photos · celebrating Meghu&apos;s special day! 🐾
         </footer>
       </main>
+
+      {/* Collage Modal — shows full size collage when clicked */}
+      {showCollage && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setShowCollage(false)}
+        >
+          <div className="relative max-h-[90vh] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setShowCollage(false)}
+              className="absolute -right-2 -top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-black shadow-lg hover:bg-gray-200"
+              aria-label="Close collage"
+            >
+              ✕
+            </button>
+            <Image
+              src="/meghu-collage.jpeg"
+              alt="Meghu's Cute Collage"
+              width={600}
+              height={600}
+              className="max-h-[85vh] w-auto rounded-lg object-contain"
+              unoptimized
+            />
+            <p className="mt-3 text-center text-lg font-bold text-white">
+              🎉 It&apos;s Meghu&apos;s Day! 🎉
+            </p>
+            <p className="text-center text-sm text-white/80">
+              Happy Birthday sweet puppy! 🐾
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
