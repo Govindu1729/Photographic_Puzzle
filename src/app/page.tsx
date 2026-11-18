@@ -16,6 +16,7 @@ import {
   PHOTO_CHAIN,
   FALLBACK_COLORS,
   chainForSize,
+  type PhotoLevel,
 } from "@/lib/photo-chain"
 import { THEMES, getTheme } from "@/lib/themes"
 import {
@@ -539,35 +540,29 @@ export default function PhotoMergeGame() {
 
           <div className="absolute inset-2">
             {tiles.map((tile) => (
-              <TileView key={tile.id} tile={tile} pct={pct} color={colors[tile.level]} />
+              <TileView key={tile.id} tile={tile} pct={pct} color={colors[tile.level]} chain={chain} />
             ))}
             {dying.map((tile) => (
-              <TileView key={`dying-${tile.id}`} tile={tile} pct={pct} color={colors[tile.level]} />
+              <TileView key={`dying-${tile.id}`} tile={tile} pct={pct} color={colors[tile.level]} chain={chain} />
             ))}
           </div>
 
-          {/* Win overlay — polaroid reveal for Meghu's Day */}
+          {/* Win overlay — celebration for Meghu's Day */}
           {won && (
             <OverlayCard theme={theme} tapeColor={colors[winLevel]}>
-              <div className="polaroid mx-auto w-40 rotate-2 cursor-pointer" style={{ animation: "reveal-zoom 0.7s ease" }} onClick={() => setShowCollage(true)}>
-                <Image
-                  src={chain[winLevel].url}
-                  alt={chain[winLevel].name}
-                  width={320}
-                  height={320}
-                  className="h-full w-full rounded-sm object-cover"
-                  unoptimized
-                />
-                <div className="font-hand mt-1 text-center text-xs" style={{ color: "#5b4a3f" }}>
-                  click for full collage!
-                </div>
-              </div>
-              <p className="font-display mt-3 text-center text-2xl font-bold" style={{ color: theme.text }}>
+              <p className="font-display text-center text-3xl font-bold" style={{ color: theme.text }}>
                 🎉 It&apos;s Meghu&apos;s Day! 🎉
               </p>
-              <p className="font-hand text-center text-sm" style={{ color: theme.textSoft }}>
+              <p className="font-hand text-center text-lg" style={{ color: theme.textSoft }}>
                 Happy Birthday little pup! 🐾
               </p>
+              <Button
+                onClick={() => setShowCollage(true)}
+                className="font-display sticker-btn rounded-xl px-6 py-3 text-lg text-white"
+                style={{ background: theme.accent }}
+              >
+                👀 see my baby
+              </Button>
               <SaveScoreForm
                 theme={theme}
                 saved={scoreSaved}
@@ -815,32 +810,31 @@ export default function PhotoMergeGame() {
         </footer>
       </main>
 
-      {/* Collage Modal — shows full size collage when clicked */}
+      {/* Collage Modal — FULL SCREEN collage when clicked */}
       {showCollage && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black"
           onClick={() => setShowCollage(false)}
         >
-          <div className="relative max-h-[90vh] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => setShowCollage(false)}
-              className="absolute -right-2 -top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-black shadow-lg hover:bg-gray-200"
-              aria-label="Close collage"
-            >
-              ✕
-            </button>
-            <Image
-              src="/meghu-collage.jpeg"
-              alt="Meghu's Cute Collage"
-              width={600}
-              height={600}
-              className="max-h-[85vh] w-auto rounded-lg object-contain"
-              unoptimized
-            />
-            <p className="mt-3 text-center text-lg font-bold text-white">
+          <button
+            onClick={() => setShowCollage(false)}
+            className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-xl text-black shadow-lg hover:bg-white"
+            aria-label="Close collage"
+          >
+            ✕
+          </button>
+          <Image
+            src="/meghu-collage.jpeg"
+            alt="Meghu's Cute Collage"
+            fill
+            className="object-contain"
+            unoptimized
+          />
+          <div className="absolute bottom-8 left-0 right-0 text-center">
+            <p className="font-display text-3xl font-bold text-white drop-shadow-lg">
               🎉 It&apos;s Meghu&apos;s Day! 🎉
             </p>
-            <p className="text-center text-sm text-white/80">
+            <p className="font-hand text-xl text-white/90 drop-shadow">
               Happy Birthday sweet puppy! 🐾
             </p>
           </div>
@@ -917,8 +911,8 @@ function SaveScoreForm({
 }
 
 /* ---- tile: a little polaroid ---- */
-function TileView({ tile, pct, color }: { tile: Tile; pct: number; color?: string }) {
-  const photo = PHOTO_CHAIN[tile.level]
+function TileView({ tile, pct, color, chain }: { tile: Tile; pct: number; color?: string; chain: PhotoLevel[] }) {
+  const photo = chain[tile.level]
   const c = color ?? FALLBACK_COLORS[tile.level]
   const anim = tile.dying
     ? "tile-dying 0.18s ease forwards"
