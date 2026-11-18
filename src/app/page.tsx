@@ -186,9 +186,10 @@ export default function PhotoMergeGame() {
      
     setLeaderboard(loadLeaderboard())
     
-    // Show welcome dialog on first visit
-    const hasVisited = localStorage.getItem("photomerge-visited")
-    if (!hasVisited) {
+    // Show welcome dialog on first visit (or if dialog version changed)
+    const WELCOME_VERSION = "v2" // bump to re-show for users who saw the broken v1
+    const savedVersion = localStorage.getItem("photomerge-visited")
+    if (savedVersion !== WELCOME_VERSION) {
       setShowWelcome(true)
     }
   }, [])
@@ -393,7 +394,7 @@ export default function PhotoMergeGame() {
 
   const handleWelcomeComplete = () => {
     setShowWelcome(false)
-    localStorage.setItem("photomerge-visited", "true")
+    localStorage.setItem("photomerge-visited", "v2")
     // Start music if user wants it
     if (musicOn && audio) {
       audio.setMusicStyle(musicStyle)
